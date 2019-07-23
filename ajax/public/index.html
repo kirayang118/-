@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Members</title>
+  <link href="assets/bootstrap.css" rel="stylesheet">
+  <link href="assets/index.css" rel="stylesheet">
+</head>
+
+<body>
+  <header>
+    <div class="navbar navbar-dark navbar-expand-sm bg-dark shadow-sm">
+      <div class="container">
+        <a href="#" class="navbar-brand d-flex justify-content-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-aperture">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="14.31" y1="8" x2="20.05" y2="17.94"></line>
+            <line x1="9.69" y1="8" x2="21.17" y2="8"></line>
+            <line x1="7.38" y1="12" x2="13.12" y2="2.06"></line>
+            <line x1="9.69" y1="16" x2="3.95" y2="6.06"></line>
+            <line x1="14.31" y1="16" x2="2.83" y2="16"></line>
+            <line x1="16.62" y1="12" x2="10.88" y2="21.94"></line>
+          </svg>
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+          aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav">
+            <li class="nav-item active"><a class="nav-link" href="#">Members</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main role="main">
+    <section class="jumbotron mb-0 bg-white text-center">
+      <div class="container">
+        <h1 class="display-4">Members</h1>
+        <p class="lead text-muted">All members~</p>
+        <div>
+          <a href="/add.html" class="btn btn-primary my-2">New member</a>
+          <a href="#" class="btn btn-secondary my-2">Secondary action</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="py-5 bg-light">
+      <div class="container">
+        <div id="members" class="row">
+          <!-- 会员列表 -->
+
+
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="py-5 text-muted">
+    <p class="container">
+      <span>this demo &copy; heima
+        <a class="float-right" href="#">Back to top &uparrow;</a>
+    </p>
+  </footer>
+
+  <script src="/assets/jquery.js"></script>
+  <script src="/assets/template-web.js"></script>
+  <!-- 模板 -->
+  <script id="tpl" type="text/html">
+    {{ each members }}
+    <div class="col-lg-4 col-md-6">
+      <div class="card mb-4">
+        <div class="card-img-top py-4 bg-dark text-center">
+          <img class="img-thumbnail mb-2 rounded-circle" src="{{ $value.avatar }}" alt="{{ $value.name }}" width="128">
+          <h3 class="card-title text-light">{{ $value.name }}</h3>
+        </div>
+        <div class="card-body">
+          <p class="card-text">
+            {{ $value.bio }}
+          </p>
+          <a href="/detail.html?id={{ $value.id }}" class="card-link">View</a>
+          <!-- <a href="#" memberid="{{ $value.id }}" class="card-link text-danger delete">Delete</a> -->
+          <a href="#" data-id="{{ $value.id }}" class="card-link text-danger delete">Delete</a>
+        </div>
+      </div>
+    </div>
+    {{ /each }}
+  </script>
+
+  <script>
+    var last = null;
+
+    // 记录当前是否正在请求数据
+    var loading = false;
+
+    // 注册滚动的事件
+    $(window).scroll(function () {
+      // 判断当前是否正在加载数据，如果正在加载数据，就不要再次发送请求了
+      if (loading) return;
+
+      // 获取文档的高度
+      var documentH = $(document).height();
+      // 获取浏览器窗口的高度
+      var windowH = $(window).height();
+      // 文档滚动出去的距离
+      var scrollTop = $(document).scrollTop();
+      // 判断当前滚动条距离底部的距离是否 <= 100，加载更多数据
+      if (documentH - windowH - scrollTop <= 100) {
+        // 加载更多
+        loadData();
+      }
+    });
+
+    // 1. 会员列表
+    // 1.1 发送请求，获取数据
+    loadData();
+    function loadData() {
+      // 记录正在加载
+      loading = true;
+      console.log(last);
+      $.ajax({
+        type: 'get',
+        url: '/api/member-list-last',
+
+        data: { last: last },
+        success: function (data) {
+          // 获取当前数组中最后一项的id
+          last = data[data.length - 1].id;
+
+          // console.log(data);
+          // 1.2 写模板 √
+          // 1.3 渲染模板 template
+          var html = template('tpl', {
+            members: data
+          });
+          // 1.4 把渲染的结果，显示到指定的位置
+          $('#members').append(html);
+
+          // 等待会员列表生成，再找删除按钮注册事件
+          // 2. 删除会员
+          // 2.1 测试删除会员的接口，/api/member-delete?id=1
+          // 2.2 找到delete，注册事件，提示用户是否删除
+          // console.log($('.delete').length);
+
+        },
+        error: function () {
+          alert('获取数据失败');
+        },
+        complete: function () {
+          // 加载完毕
+          loading = false;
+        }
+      });
+
+    }
+
+    $('#members').on('click', '.delete', function () {
+      if (!confirm('确认删除该会员？')) {
+        return false;
+      }
+
+      // 记录当前this
+      var that = this;
+
+      // 2.3 获取当前要删除的数据的id
+      var id = $(this).data('id');
+      // 2.4 发送请求，删除数据
+      $.ajax({
+        type: 'get',
+        url: '/api/member-delete',
+        data: { id: id },
+        success: function (data) {
+          // 判断删除成功还是失败。。。
+          // 2.5 删除对应的标签
+          // $(this).parent().parent().parent().remove();
+
+          // this就是调用ajax方法的时候传入的对象
+          // console.log(this);
+
+          $(that).parent().parent().parent().remove();
+        }
+      });
+
+      // 取消后续内容的执行
+      return false;
+    });
+
+  </script>
+</body>
+
+</html>
